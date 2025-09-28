@@ -4,17 +4,9 @@ use std::time::Duration;
 use evian::{
     control::loops::{AngularPid, Pid},
     drivetrain::model::Differential,
-    motion::Seeking,
+    motion::{Basic, Seeking},
     prelude::*,
 };
-
-use evian::tracking::RotarySensor;
-use vexide::{
-    devices::PortError,
-    prelude::{AdiEncoder, AdiPort, Direction, Position},
-};
-
-type Amt102V = AdiEncoder<8192>;
 
 const LINEAR_PID: Pid = Pid::new(1.0, 0.0, 0.125, None);
 const ANGULAR_PID: AngularPid = AngularPid::new(16.0, 0.0, 1.0, None);
@@ -41,27 +33,34 @@ impl Compete for Robot {
             tolerances: LINEAR_TOLERANCES,
             timeout: Some(Duration::from_secs(10)),
         };
+        let mut basic = Basic {
+            linear_controller: LINEAR_PID,
+            angular_controller: ANGULAR_PID,
+            linear_tolerances: LINEAR_TOLERANCES,
+            angular_tolerances: ANGULAR_TOLERANCES,
+            timeout: Some(Duration::from_secs(10)),
+        };
 
-        seeking.move_to_point(dt, (0.0, 12.0)).await;
-        // // Drive forwards at 60% speed.
-        // basic
-        //     .drive_distance(dt, 24.0)
-        //     .with_linear_output_limit(6.0)
-        //     .await;
+        // Drive forwards at 60% speed.
+        basic
+            .drive_distance(dt, 24.0)
+            .with_linear_output_limit(6.0)
+            .await;
 
-        // // Turn to 0 degrees heading.
-        // basic.turn_to_heading(dt, 0.0.deg()).await;
+        // Turn to 0 degrees heading.
+        basic.turn_to_heading(dt, 0.0.deg()).await;
 
-        // // Move to point (24, 24) on the field.
+        // Move to point (24, 24) on the field.
+        seeking.move_to_point(dt, (24.0, 24.0)).await;
 
-        // // Having fun with modifiers.
-        // basic
-        //     .drive_distance_at_heading(dt, 8.0, 45.0.deg())
-        //     .with_linear_kd(1.2)
-        //     .with_angular_tolerance_duration(Duration::from_millis(5))
-        //     .with_angular_error_tolerance(f64::to_radians(10.0))
-        //     .with_linear_error_tolerance(12.0)
-        //     .await;
+        // Having fun with modifiers.
+        basic
+            .drive_distance_at_heading(dt, 8.0, 45.0.deg())
+            .with_linear_kd(1.2)
+            .with_angular_tolerance_duration(Duration::from_millis(5))
+            .with_angular_error_tolerance(f64::to_radians(10.0))
+            .with_linear_error_tolerance(12.0)
+            .await;
     }
 
     async fn driver(&mut self) {
@@ -81,8 +80,8 @@ impl Compete for Robot {
 
 #[vexide::main]
 async fn main(peripherals: Peripherals) {
-    let forwards_enc = Amt102V::new(peripherals.adi_a, peripherals.adi_b);
-    let sideways_enc = Amt102V::new(peripherals.adi_c, peripherals.adi_d);
+    let forwards_enc = AdiOpticalEncoder::new(peripherals.adi_a, peripherals.adi_b);
+    let sideways_enc = AdiOpticalEncoder::new(peripherals.adi_c, peripherals.adi_d);
 
     let mut imu = InertialSensor::new(peripherals.port_15);
     imu.calibrate().await.unwrap();

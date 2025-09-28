@@ -1,7 +1,7 @@
-use core::{
+use std::{
     pin::Pin,
     task::{Context, Poll},
-    time::Duration,
+    time::{Duration, Instant},
 };
 
 use evian_drivetrain::{Drivetrain, model::Tank};
@@ -9,8 +9,7 @@ use evian_math::{Angle, Vec2};
 use evian_tracking::{TracksHeading, TracksPosition};
 
 use vexide::{
-    float::Float,
-    time::{Instant, Sleep, sleep},
+    time::{Sleep, sleep},
 };
 
 use super::Waypoint;

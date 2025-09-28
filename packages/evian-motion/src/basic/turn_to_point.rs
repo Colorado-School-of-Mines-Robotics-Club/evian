@@ -1,11 +1,11 @@
-use core::{
+use std::{
     future::Future,
     pin::Pin,
     task::{Context, Poll},
-    time::Duration,
+    time::{Duration, Instant},
 };
 
-use vexide::time::{Instant, Sleep, sleep};
+use vexide::time::{Sleep, sleep};
 
 use evian_control::{
     Tolerances,

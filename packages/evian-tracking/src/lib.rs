@@ -41,10 +41,6 @@
 //! of what units to use and keeps everything generally stable while the Rust ecosystem tries to
 //! figure out what typed units library to go with.
 
-#![no_std]
-
-extern crate alloc;
-
 mod sensor;
 pub mod wheeled;
 

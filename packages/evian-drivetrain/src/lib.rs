@@ -8,10 +8,6 @@
 //! tracking system. The [`Drivetrain`] type can enacapsulate many different types of robot
 //! drivetrains depending on how its model and tracking logic is implemented.
 
-#![no_std]
-
-extern crate alloc;
-
 pub mod model;
 
 use evian_tracking::Tracking;

@@ -11,8 +11,9 @@ mod mecanum;
 pub use differential::Differential;
 pub use mecanum::Mecanum;
 
-/// A collection of motors driving a mobile robot.
+/// A collection of motors driving a wheeled mobile robot.
 pub trait DrivetrainModel {
+    /// Error type returned when the robot fails to move.
     type Error;
 }
 

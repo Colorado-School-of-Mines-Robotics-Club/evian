@@ -1,11 +1,11 @@
-use core::{
+use std::{
     f64::{
         self,
         consts::{FRAC_PI_2, PI, TAU},
     },
     ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign},
 };
-use vexide::{devices::position::Position, float::Float};
+use vexide::devices::position::Position;
 
 /// Angular position.
 #[derive(Default, Debug, Clone, Copy, PartialEq)]

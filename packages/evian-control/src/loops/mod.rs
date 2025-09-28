@@ -6,7 +6,7 @@ pub mod feedforward;
 mod pid;
 mod tbh;
 
-use core::time::Duration;
+use std::time::Duration;
 
 pub use bang_bang::BangBang;
 pub use cascade::Cascade;

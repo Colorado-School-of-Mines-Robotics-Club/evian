@@ -2,7 +2,7 @@
 
 extern crate alloc;
 
-use core::time::Duration;
+use std::time::Duration;
 
 use alloc::vec::Vec;
 use evian_drivetrain::{Drivetrain, model::Tank};

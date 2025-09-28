@@ -1,8 +1,9 @@
-use core::{
+use std::{
     fmt,
     ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign},
 };
-use vexide::{devices::math::Point2, float::Float};
+use num_traits::real::Real;
+use vexide::devices::math::Point2;
 
 /// A vector in 2D cartesian space.
 ///
@@ -47,7 +48,7 @@ impl<T: Copy> Vec2<T> {
     }
 }
 
-impl<T: Float + Copy + Mul<Output = T>> Vec2<T> {
+impl<T: Real + Copy + Mul<Output = T>> Vec2<T> {
     /// Construct a `Vec2` from polar coordinates.
     pub fn from_polar(r: T, theta: T) -> Self {
         let (sin, cos) = theta.sin_cos();
@@ -61,7 +62,7 @@ impl<T: Float + Copy + Mul<Output = T>> Vec2<T> {
 
 // MARK: Math
 
-impl<T: Float + Copy> Vec2<T> {
+impl<T: Real + Copy> Vec2<T> {
     /// Returns this vector's angle in radians relative to the origin (0, 0).
     pub fn angle(&self) -> T {
         self.y.atan2(self.x)
@@ -73,7 +74,7 @@ impl<T: Float + Copy> Vec2<T> {
     }
 }
 
-impl<T: Float + Copy + Sub<Output = T>> Vec2<T> {
+impl<T: Real + Copy + Sub<Output = T>> Vec2<T> {
     /// Returns the cartesian distance between one vector and another.
     ///
     /// This operation is equivalent to `(self - other).length()`.
@@ -82,7 +83,7 @@ impl<T: Float + Copy + Sub<Output = T>> Vec2<T> {
     }
 }
 
-impl<T: Float + Copy + Div<Output = T>> Vec2<T> {
+impl<T: Real + Copy + Div<Output = T>> Vec2<T> {
     /// Returns the unit (normalized) vector.
     ///
     /// This function creates a `Vec2` with a length of 1.0 while retaining the
@@ -93,13 +94,7 @@ impl<T: Float + Copy + Div<Output = T>> Vec2<T> {
     }
 }
 
-impl<T: Float + Copy + Add<Output = T> + Sub<Output = T> + Mul<Output = T>> Vec2<T> {
-    /// Linearly interpolates between two vectors.
-    #[must_use]
-    pub fn lerp(self, other: Vec2<T>, t: T) -> Vec2<T> {
-        self + ((other - self) * t)
-    }
-
+impl<T: Real + Copy + Add<Output = T> + Sub<Output = T> + Mul<Output = T>> Vec2<T> {
     /// Creates a new vector with its coordinates rotated by a given angle
     /// in radians.
     #[must_use]
@@ -113,14 +108,22 @@ impl<T: Float + Copy + Add<Output = T> + Sub<Output = T> + Mul<Output = T>> Vec2
     }
 }
 
-impl<T: Float + Copy + Mul<Output = T> + Sub<Output = T>> Vec2<T> {
+impl<T: Copy + Add<Output = T> + Sub<Output = T> + Mul<Output = T>> Vec2<T> {
+    /// Linearly interpolates between two vectors.
+    #[must_use]
+    pub fn lerp(self, other: Vec2<T>, t: T) -> Vec2<T> {
+        self + ((other - self) * t)
+    }
+}
+
+impl<T: Copy + Mul<Output = T> + Sub<Output = T>> Vec2<T> {
     /// Computes the cross product between this vector and another `Vec2`.
     pub fn cross(&self, other: Vec2<T>) -> T {
         self.x * other.y - self.y * other.x
     }
 }
 
-impl<T: Float + Copy + Mul<Output = T> + Add<Output = T>> Vec2<T> {
+impl<T: Copy + Mul<Output = T> + Add<Output = T>> Vec2<T> {
     /// Computes the dot product between this vector and another `Vec2`.
     ///
     /// The dot product is the sum of the products of each vector's components,
@@ -131,7 +134,7 @@ impl<T: Float + Copy + Mul<Output = T> + Add<Output = T>> Vec2<T> {
     }
 }
 
-impl<T: Float + Copy + Mul<Output = T> + Add<Output = T> + Div<Output = T>> Vec2<T> {
+impl<T: Real + Copy + Mul<Output = T> + Add<Output = T> + Div<Output = T>> Vec2<T> {
     /// Projects one `Vec2` onto onto another.
     #[must_use]
     pub fn projected(&self, onto: Vec2<T>) -> Self {

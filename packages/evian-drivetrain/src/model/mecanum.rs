@@ -1,12 +1,9 @@
-use core::cell::RefCell;
+use std::{cell::RefCell, rc::Rc};
 
-use alloc::rc::Rc;
 use evian_math::{Vec2, desaturate};
 use vexide::{devices::smart::motor::MotorError, prelude::Motor};
 
-use crate::model::Tank;
-
-use super::{Arcade, DrivetrainModel, Holonomic};
+use super::{DrivetrainModel, Holonomic, Tank};
 
 pub struct Mecanum {
     pub front_left_motors: Rc<RefCell<dyn AsMut<[Motor]>>>,

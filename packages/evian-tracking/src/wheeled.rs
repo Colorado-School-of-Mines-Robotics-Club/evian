@@ -2,15 +2,15 @@
 
 use evian_math::{Angle, IntoAngle, Vec2};
 
-use alloc::rc::Rc;
-use core::{
+use std::{
+    rc::Rc,
     cell::RefCell,
     f64::consts::{PI, TAU},
+    time::Instant,
 };
 use vexide::{
     devices::smart::Motor,
     prelude::{Task, sleep, spawn},
-    time::Instant,
 };
 
 use crate::{

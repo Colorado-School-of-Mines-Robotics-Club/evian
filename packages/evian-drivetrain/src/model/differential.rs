@@ -1,6 +1,5 @@
-use core::cell::RefCell;
+use std::{cell::RefCell, rc::Rc};
 
-use alloc::rc::Rc;
 use vexide::{devices::smart::motor::MotorError, prelude::Motor};
 
 use super::{DrivetrainModel, Tank};

@@ -10,7 +10,11 @@ icon = "cool-x"
 compress = true
 
 [dev-dependencies]
-vexide = "0.7.0"
+vexide = { git = "https://github.com/vexide/vexide.git", branch = "refactor/upstreamed-target+rust-std", features = [
+    "full",
+    "vex-sdk-jumptable",
+    "vex-sdk-mock",
+] }
 evian = { path = "packages/evian" }
 
 [workspace]
@@ -18,11 +22,7 @@ members = ["packages/*"]
 resolver = "2"
 
 [workspace.dependencies]
-vexide = { version = "0.7.0", default-features = false, features = [
-    "async",
-    "core",
-    "devices",
-] }
+vexide = { git = "https://github.com/vexide/vexide.git", branch = "refactor/upstreamed-target+rust-std" }
 evian = { version = "0.3.0-rc.1", path = "packages/evian", default-features = false }
 evian-control = { version = "0.0.1-rc.1", path = "packages/evian-control", default-features = false }
 evian-drivetrain = { version = "0.0.1-rc.1", path = "packages/evian-drivetrain", default-features = false }
@@ -45,6 +45,9 @@ cast_sign_loss = "allow"
 missing_panics_doc = "allow"
 cast_possible_wrap = "allow"
 match_bool = "allow"
+
+[dependencies]
+num-traits = "0.2.19"
 
 [workspace.lints.rust]
 rust_2018_idioms = { level = "warn", priority = -1 }

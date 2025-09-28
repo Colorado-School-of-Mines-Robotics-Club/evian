@@ -1,6 +1,6 @@
-use core::{future::Future, pin::Pin, task::Poll, time::Duration};
+use std::{future::Future, pin::Pin, task::Poll, time::{Duration, Instant}};
 
-use vexide::time::{Instant, Sleep, sleep};
+use vexide::time::{Sleep, sleep};
 
 use evian_control::{
     Tolerances,
@@ -166,7 +166,7 @@ where
     }
 
     /// Removes this motion's error tolerance.
-    pub const fn withear_error_tolerance(&mut self) -> &mut Self {
+    pub const fn without_error_tolerance(&mut self) -> &mut Self {
         self.tolerances.error_tolerance = None;
         self
     }
@@ -178,7 +178,7 @@ where
     }
 
     /// Removes this motion's velocity tolerance.
-    pub const fn withear_velocity_tolerance(&mut self) -> &mut Self {
+    pub const fn without_velocity_tolerance(&mut self) -> &mut Self {
         self.tolerances.velocity_tolerance = None;
         self
     }
@@ -190,7 +190,7 @@ where
     }
 
     /// Removes this motion's tolerance duration.
-    pub const fn withear_tolerance_duration(&mut self) -> &mut Self {
+    pub const fn without_tolerance_duration(&mut self) -> &mut Self {
         self.tolerances.duration = None;
         self
     }

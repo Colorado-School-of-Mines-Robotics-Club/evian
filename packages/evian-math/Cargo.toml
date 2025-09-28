@@ -11,9 +11,14 @@ edition = "2024"
 
 [dependencies]
 vexide = { workspace = true }
+num-traits = "0.2"
 
 [lints]
 workspace = true
 
 [package.metadata.docs.rs]
-targets = ["armv7a-none-eabi"]
+targets = ["armv7a-vex-v5"]
+cargo-args = [
+    "-Zbuild-std=std,panic_abort",
+    "-Zbuild-std-features=compiler-builtins-mem",
+]

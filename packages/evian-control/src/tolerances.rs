@@ -13,8 +13,7 @@
 //! "settled" when it meets specified error and velocity tolerances for a given duration, after when a timeout is
 //! reached.
 
-use core::time::Duration;
-use vexide::time::Instant;
+use std::time::{Duration, Instant};
 
 /// Describes when a control system has stabilized reasonably near its setpoint.
 ///

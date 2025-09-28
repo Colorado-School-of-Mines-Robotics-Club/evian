@@ -1,13 +1,10 @@
 //! Point-to-point feedback seeking.
 
-use core::time::Duration;
+use std::time::Duration;
 
 use evian_control::{Tolerances, loops::Feedback};
-use evian_drivetrain::{
-    Drivetrain,
-    model::{Arcade, Differential},
-};
-use evian_math::{Angle, Vec2};
+use evian_drivetrain::{Drivetrain, model::Arcade};
+use evian_math::Vec2;
 use evian_tracking::{TracksHeading, TracksPosition, TracksVelocity};
 
 mod boomerang;
@@ -29,13 +26,13 @@ pub use move_to_point::MoveToPointFuture;
 pub struct Seeking<L, A>
 where
     L: Feedback<Input = f64, Output = f64> + Unpin + Clone,
-    A: Feedback<Input = Angle, Output = f64> + Unpin + Clone,
+    A: Feedback<Input = f64, Output = f64> + Unpin + Clone,
 {
-    /// Linear (forward driving) feedback controller.
+    /// Linear (forward) feedback controller.
     pub linear_controller: L,
 
-    /// Angular (turning) feedback controller.
-    pub angular_controller: A,
+    /// Angular (cross-track) feedback controller.
+    pub lateral_controller: A,
 
     /// Linear settling conditions.
     ///
@@ -50,7 +47,7 @@ where
 impl<L, A> Seeking<L, A>
 where
     L: Feedback<Input = f64, Output = f64> + Unpin + Clone,
-    A: Feedback<Input = Angle, Output = f64> + Unpin + Clone,
+    A: Feedback<Input = f64, Output = f64> + Unpin + Clone,
 {
     /// Moves the robot to a 2D point.
     ///
@@ -68,35 +65,35 @@ where
             timeout: self.timeout,
             tolerances: self.tolerances,
             linear_controller: self.linear_controller.clone(),
-            angular_controller: self.angular_controller.clone(),
+            lateral_controller: self.lateral_controller.clone(),
             state: None,
         }
     }
 
-    /// Moves the robot to a desired pose (position and heading).
-    ///
-    /// This motion uses a boomerang controller, which is a motion algorithm
-    /// for moving differential drivetrains to a desired pose. Larger `lead`
-    /// values will result in wider arcs, while smaller `lead` values will
-    /// result in smaller arcs. You may need to tune the `lead` value in order
-    /// to properly reach the desired heading by the end of the motion.
-    pub fn boomerang<'a, M: Arcade, T: TracksPosition + TracksHeading + TracksVelocity>(
-        &mut self,
-        drivetrain: &'a mut Drivetrain<M, T>,
-        point: impl Into<Vec2<f64>>,
-        heading: Angle,
-        lead: f64,
-    ) -> BoomerangFuture<'a, M, L, A, T> {
-        BoomerangFuture {
-            drivetrain,
-            target_heading: heading,
-            lead,
-            target_point: point.into(),
-            timeout: self.timeout,
-            tolerances: self.tolerances,
-            linear_controller: self.linear_controller.clone(),
-            angular_controller: self.angular_controller.clone(),
-            state: None,
-        }
-    }
+    // /// Moves the robot to a desired pose (position and heading).
+    // ///
+    // /// This motion uses a boomerang controller, which is a motion algorithm
+    // /// for moving differential drivetrains to a desired pose. Larger `lead`
+    // /// values will result in wider arcs, while smaller `lead` values will
+    // /// result in smaller arcs. You may need to tune the `lead` value in order
+    // /// to properly reach the desired heading by the end of the motion.
+    // pub fn boomerang<'a, M: Arcade, T: TracksPosition + TracksHeading + TracksVelocity>(
+    //     &mut self,
+    //     drivetrain: &'a mut Drivetrain<M, T>,
+    //     point: impl Into<Vec2<f64>>,
+    //     heading: Angle,
+    //     lead: f64,
+    // ) -> BoomerangFuture<'a, M, L, A, T> {
+    //     BoomerangFuture {
+    //         drivetrain,
+    //         target_heading: heading,
+    //         lead,
+    //         target_point: point.into(),
+    //         timeout: self.timeout,
+    //         tolerances: self.tolerances,
+    //         linear_controller: self.linear_controller.clone(),
+    //         angular_controller: self.angular_controller.clone(),
+    //         state: None,
+    //     }
+    // }
 }

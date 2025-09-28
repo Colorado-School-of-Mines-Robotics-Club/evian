@@ -1,6 +1,6 @@
 //! Feedback-driven driving and turning.
 
-use core::time::Duration;
+use std::time::Duration;
 
 use evian_control::{Tolerances, loops::Feedback};
 use evian_drivetrain::{Drivetrain, model::Arcade};

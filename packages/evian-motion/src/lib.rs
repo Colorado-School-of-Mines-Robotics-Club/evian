@@ -1,7 +1,5 @@
 //! Motion control algorithms.
 
-#![no_std]
-
 mod curvature;
 
 pub mod basic;

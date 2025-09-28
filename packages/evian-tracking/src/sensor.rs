@@ -1,6 +1,5 @@
-use core::cell::RefCell;
+use std::{cell::RefCell, rc::Rc, vec::Vec};
 
-use alloc::{rc::Rc, vec::Vec};
 use evian_math::Angle;
 use vexide::{
     devices::{
@@ -44,7 +43,14 @@ macro_rules! impl_rotary_sensor {
 
 impl_rotary_sensor!(Motor, position, MotorError);
 impl_rotary_sensor!(RotationSensor, position, PortError);
-impl_rotary_sensor!(AdiEncoder, position, PortError);
+
+impl<const TPR: u32> RotarySensor for AdiEncoder<TPR> {
+    type Error = PortError;
+
+    fn position(&self) -> Result<Position, Self::Error> {
+        self.position()
+    }
+}
 
 impl<T: RotarySensor> RotarySensor for Vec<T> {
     type Error = T::Error;

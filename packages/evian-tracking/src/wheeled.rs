@@ -4,7 +4,7 @@ use evian_math::{Angle, IntoAngle, Vec2};
 
 use std::{
     cell::RefCell,
-    f64::consts::{PI, TAU},
+    f64::consts::PI,
     rc::Rc,
     time::Instant,
 };

@@ -22,8 +22,8 @@ members = ["packages/*"]
 resolver = "2"
 
 [workspace.dependencies]
-vexide = { path = "../vexide/packages/vexide" }
-vexide-devices = { path = "../vexide/packages/vexide-devices" }
+vexide = { git = "https://github.com/vexide/vexide.git" }
+vexide-devices = { git = "https://github.com/vexide/vexide.git", package = "vexide-devices" }
 evian = { version = "0.3.0-rc.1", path = "packages/evian", default-features = false }
 evian-control = { version = "0.0.1-rc.1", path = "packages/evian-control", default-features = false }
 evian-drivetrain = { version = "0.0.1-rc.1", path = "packages/evian-drivetrain", default-features = false }

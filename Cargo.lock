@@ -126,7 +126,7 @@ name = "evian-control"
 version = "0.0.1-rc.1"
 dependencies = [
  "evian-math",
- "vexide",
+ "vexide 0.8.0 (git+https://github.com/vexide/vexide.git)",
 ]
 
 [[package]]
@@ -135,7 +135,7 @@ version = "0.0.1-rc.1"
 dependencies = [
  "evian-math",
  "evian-tracking",
- "vexide-devices",
+ "vexide-devices 0.8.0 (git+https://github.com/vexide/vexide.git)",
 ]
 
 [[package]]
@@ -144,8 +144,8 @@ version = "0.0.1-rc.1"
 dependencies = [
  "evian",
  "num-traits",
- "vexide",
- "vexide-devices",
+ "vexide 0.8.0 (git+https://github.com/vexide/vexide.git)",
+ "vexide-devices 0.8.0 (git+https://github.com/vexide/vexide.git)",
 ]
 
 [[package]]
@@ -156,7 +156,7 @@ dependencies = [
  "evian-drivetrain",
  "evian-math",
  "evian-tracking",
- "vexide",
+ "vexide 0.8.0 (git+https://github.com/vexide/vexide.git)",
 ]
 
 [[package]]
@@ -164,7 +164,7 @@ name = "evian-tracking"
 version = "0.0.1-rc.1"
 dependencies = [
  "evian-math",
- "vexide",
+ "vexide 0.8.0 (git+https://github.com/vexide/vexide.git)",
 ]
 
 [[package]]
@@ -173,7 +173,7 @@ version = "0.0.1"
 dependencies = [
  "evian",
  "num-traits",
- "vexide",
+ "vexide 0.8.0",
 ]
 
 [[package]]
@@ -499,16 +499,39 @@ name = "vexide"
 version = "0.8.0"
 dependencies = [
  "vex-sdk",
- "vexide-async",
- "vexide-core",
- "vexide-devices",
+ "vexide-async 0.2.0",
+ "vexide-core 0.8.0",
+ "vexide-devices 0.8.0",
  "vexide-macro",
  "vexide-startup",
 ]
 
 [[package]]
+name = "vexide"
+version = "0.8.0"
+source = "git+https://github.com/vexide/vexide.git#e938bbb6c79b8017e734d4d3acf9ed2e7ab3b25b"
+dependencies = [
+ "vex-sdk",
+ "vexide-async 0.2.0 (git+https://github.com/vexide/vexide.git)",
+ "vexide-core 0.8.0 (git+https://github.com/vexide/vexide.git)",
+ "vexide-devices 0.8.0 (git+https://github.com/vexide/vexide.git)",
+]
+
+[[package]]
 name = "vexide-async"
 version = "0.2.0"
+dependencies = [
+ "async-lock",
+ "async-task",
+ "futures-util",
+ "vex-sdk",
+ "waker-fn",
+]
+
+[[package]]
+name = "vexide-async"
+version = "0.2.0"
+source = "git+https://github.com/vexide/vexide.git#e938bbb6c79b8017e734d4d3acf9ed2e7ab3b25b"
 dependencies = [
  "async-lock",
  "async-task",
@@ -529,6 +552,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "vexide-core"
+version = "0.8.0"
+source = "git+https://github.com/vexide/vexide.git#e938bbb6c79b8017e734d4d3acf9ed2e7ab3b25b"
+dependencies = [
+ "bitflags",
+ "futures-core",
+ "pin-project",
+ "vex-sdk",
+]
+
+[[package]]
 name = "vexide-devices"
 version = "0.8.0"
 dependencies = [
@@ -540,7 +574,23 @@ dependencies = [
  "smart-leds-trait",
  "snafu",
  "vex-sdk",
- "vexide-core",
+ "vexide-core 0.8.0",
+]
+
+[[package]]
+name = "vexide-devices"
+version = "0.8.0"
+source = "git+https://github.com/vexide/vexide.git#e938bbb6c79b8017e734d4d3acf9ed2e7ab3b25b"
+dependencies = [
+ "bitflags",
+ "bytemuck",
+ "libm",
+ "mint",
+ "rgb",
+ "smart-leds-trait",
+ "snafu",
+ "vex-sdk",
+ "vexide-core 0.8.0 (git+https://github.com/vexide/vexide.git)",
 ]
 
 [[package]]
@@ -564,7 +614,7 @@ dependencies = [
  "vex-sdk",
  "vex-sdk-jumptable",
  "vex-sdk-mock",
- "vexide-core",
+ "vexide-core 0.8.0",
 ]
 
 [[package]]

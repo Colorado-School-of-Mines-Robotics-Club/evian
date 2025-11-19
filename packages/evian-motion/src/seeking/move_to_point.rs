@@ -27,8 +27,8 @@ pub(crate) struct State {
 pub struct MoveToPointFuture<'a, M, L, A, T>
 where
     M: Arcade,
-    L: Feedback<Input = f64, Output = f64> + Unpin,
-    A: Feedback<Input = f64, Output = f64> + Unpin,
+    L: Feedback<State = f64, Signal = f64> + Unpin,
+    A: Feedback<State = f64, Signal = f64> + Unpin,
     T: TracksPosition + TracksHeading + TracksVelocity,
 {
     pub(crate) target_point: Vec2<f64>,
@@ -46,8 +46,8 @@ where
 impl<M, L, A, T> Future for MoveToPointFuture<'_, M, L, A, T>
 where
     M: Arcade,
-    L: Feedback<Input = f64, Output = f64> + Unpin,
-    A: Feedback<Input = f64, Output = f64> + Unpin,
+    L: Feedback<State = f64, Signal = f64> + Unpin,
+    A: Feedback<State = f64, Signal = f64> + Unpin,
     T: TracksPosition + TracksHeading + TracksVelocity,
 {
     type Output = ();
@@ -90,7 +90,7 @@ where
             return Poll::Ready(());
         }
 
-        let angle_error = (heading - local_target.angle().rad()).wrapped();
+        let angle_error = (heading - local_target.angle().rad()).wrapped_half();
         let mut projected_cte = distance_error * angle_error.sin();
 
         if angle_error.as_radians().abs() > FRAC_PI_2 {
@@ -99,7 +99,7 @@ where
         }
 
         let angular_output = this.lateral_controller.update(projected_cte, 0.0, dt);
-        let linear_output = this.linear_controller.update(-distance_error, 0.0, dt);
+        let linear_output = this.linear_controller.update(-distance_error, 0.0, dt) * angle_error.cos().abs();
 
         drop(
             this.drivetrain
@@ -120,8 +120,8 @@ where
 impl<M, L, A, T> MoveToPointFuture<'_, M, L, A, T>
 where
     M: Arcade,
-    L: Feedback<Input = f64, Output = f64> + Unpin,
-    A: Feedback<Input = f64, Output = f64> + Unpin,
+    L: Feedback<State = f64, Signal = f64> + Unpin,
+    A: Feedback<State = f64, Signal = f64> + Unpin,
     T: TracksPosition + TracksHeading + TracksVelocity,
 {
     /// Reverses this motion, moving to the point backwards rather than forwards.
@@ -202,7 +202,7 @@ where
 impl<M, A, T> MoveToPointFuture<'_, M, Pid, A, T>
 where
     M: Arcade,
-    A: Feedback<Input = f64, Output = f64> + Unpin,
+    A: Feedback<State = f64, Signal = f64> + Unpin,
     T: TracksPosition + TracksHeading + TracksVelocity,
 {
     /// Modifies this motion's linear PID gains.
@@ -260,7 +260,7 @@ where
 impl<M, L, T> MoveToPointFuture<'_, M, L, Pid, T>
 where
     M: Arcade,
-    L: Feedback<Input = f64, Output = f64> + Unpin,
+    L: Feedback<State = f64, Signal = f64> + Unpin,
     T: TracksPosition + TracksHeading + TracksVelocity,
 {
     /// Modifies this motion's lateral PID gains.

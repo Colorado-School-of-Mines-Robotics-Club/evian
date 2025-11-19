@@ -1,8 +1,6 @@
 use std::time::Duration;
 
-use crate::loops::ControlLoop;
-
-use super::{Feedback, FeedbackMarker};
+use super::{Feedback};
 
 /// Bang-bang controller.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -27,13 +25,9 @@ impl BangBang {
     }
 }
 
-impl ControlLoop for BangBang {
-    type Marker = FeedbackMarker;
-    type Input = f64;
-    type Output = f64;
-}
-
 impl Feedback for BangBang {
+    type State = f64;
+    type Signal = f64;
     fn update(&mut self, measurement: f64, setpoint: f64, _dt: Duration) -> f64 {
         if measurement < setpoint {
             self.magnitude

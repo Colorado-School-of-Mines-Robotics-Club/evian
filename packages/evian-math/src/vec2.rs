@@ -1,9 +1,9 @@
-use std::{
+use num_traits::real::Real;
+use vexide_devices::math::Point2;
+use core::{
     fmt,
     ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign},
 };
-use num_traits::real::Real;
-use vexide::devices::math::Point2;
 
 /// A vector in 2D cartesian space.
 ///

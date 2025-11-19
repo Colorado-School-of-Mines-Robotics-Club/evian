@@ -10,7 +10,7 @@ version = "0.0.1-rc.1"
 edition = "2024"
 
 [dependencies]
-vexide = { workspace = true }
+vexide-devices = { workspace = true }
 evian-tracking = { workspace = true }
 evian-math = { workspace = true }
 

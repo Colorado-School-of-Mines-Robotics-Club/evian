@@ -10,7 +10,7 @@ icon = "cool-x"
 compress = true
 
 [dev-dependencies]
-vexide = { git = "https://github.com/vexide/vexide.git", branch = "refactor/upstreamed-target+rust-std", features = [
+vexide = { path = "../vexide/packages/vexide", features = [
     "full",
     "vex-sdk-jumptable",
     "vex-sdk-mock",
@@ -22,7 +22,8 @@ members = ["packages/*"]
 resolver = "2"
 
 [workspace.dependencies]
-vexide = { git = "https://github.com/vexide/vexide.git", branch = "refactor/upstreamed-target+rust-std" }
+vexide = { path = "../vexide/packages/vexide" }
+vexide-devices = { path = "../vexide/packages/vexide-devices" }
 evian = { version = "0.3.0-rc.1", path = "packages/evian", default-features = false }
 evian-control = { version = "0.0.1-rc.1", path = "packages/evian-control", default-features = false }
 evian-drivetrain = { version = "0.0.1-rc.1", path = "packages/evian-drivetrain", default-features = false }

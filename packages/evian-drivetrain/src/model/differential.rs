@@ -1,6 +1,9 @@
-use std::{cell::RefCell, rc::Rc};
+extern crate alloc;
 
-use vexide::{devices::smart::motor::MotorError, prelude::Motor};
+use core::cell::RefCell;
+use alloc::rc::Rc;
+
+use vexide_devices::smart::{PortError, motor::Motor};
 
 use super::{DrivetrainModel, Tank};
 
@@ -108,7 +111,7 @@ impl Differential {
 // MARK: Kinematics
 
 impl DrivetrainModel for Differential {
-    type Error = MotorError;
+    type Error = PortError;
 }
 
 impl Tank for Differential {

@@ -1,5 +1,7 @@
 //! Math utilities & types.
 
+#![no_std]
+
 mod angle;
 mod vec2;
 
@@ -18,6 +20,8 @@ pub use vec2::Vec2;
 /// # Examples
 /// 
 /// ```
+/// use evian::math::desaturate;
+/// 
 /// let values = [3.0, -4.0, 1.0];
 /// let result = desaturate(values, 2.0);
 /// assert_eq!(result, [1.5, -2.0, 0.5]);

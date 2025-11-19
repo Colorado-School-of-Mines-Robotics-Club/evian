@@ -10,8 +10,12 @@ version = "0.0.1-rc.1"
 edition = "2024"
 
 [dependencies]
-vexide = { workspace = true }
+vexide-devices = { workspace = true }
 num-traits = "0.2"
+
+[dev-dependencies]
+vexide = { workspace = true }
+evian = { workspace = true }
 
 [lints]
 workspace = true

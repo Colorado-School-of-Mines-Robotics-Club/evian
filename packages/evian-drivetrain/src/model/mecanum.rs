@@ -1,19 +1,30 @@
-use std::{cell::RefCell, rc::Rc};
+extern crate alloc;
+
+use core::cell::RefCell;
+use alloc::rc::Rc;
 
 use evian_math::{Vec2, desaturate};
-use vexide::{devices::smart::motor::MotorError, prelude::Motor};
+use vexide_devices::smart::{PortError, motor::Motor};
 
 use super::{DrivetrainModel, Holonomic, Tank};
 
+/// Mecanum drivetrain model.
 pub struct Mecanum {
+    /// Motors driving the front-left wheel(s).
     pub front_left_motors: Rc<RefCell<dyn AsMut<[Motor]>>>,
+
+    /// Motors driving the front-right wheel(s).
     pub front_right_motors: Rc<RefCell<dyn AsMut<[Motor]>>>,
+
+    /// Motors driving the back-left wheel(s).
     pub back_left_motors: Rc<RefCell<dyn AsMut<[Motor]>>>,
+
+    /// Motors driving the back-right wheel(s).
     pub back_right_motors: Rc<RefCell<dyn AsMut<[Motor]>>>,
 }
 
 impl DrivetrainModel for Mecanum {
-    type Error = MotorError;
+    type Error = PortError;
 }
 
 impl Holonomic for Mecanum {

@@ -7,18 +7,18 @@ use evian_drivetrain::{Drivetrain, model::Arcade};
 use evian_math::{Angle, Vec2};
 use evian_tracking::{TracksForwardTravel, TracksHeading, TracksPosition, TracksVelocity};
 
-mod distance_at_heading;
+mod drive;
 mod turn_to_point;
 
-pub use distance_at_heading::DriveDistanceAtHeadingFuture;
+pub use drive::DriveFuture;
 pub use turn_to_point::TurnToPointFuture;
 
 /// Feedback-driven driving and turning.
 #[derive(PartialEq)]
 pub struct Basic<L, A>
 where
-    L: Feedback<Input = f64, Output = f64> + Unpin + Clone,
-    A: Feedback<Input = Angle, Output = f64> + Unpin + Clone,
+    L: Feedback<State = f64, Signal = f64> + Unpin + Clone,
+    A: Feedback<State = Angle, Signal = f64> + Unpin + Clone,
 {
     /// Linear (forward driving) feedback controller.
     pub linear_controller: L,
@@ -38,8 +38,8 @@ where
 
 impl<L, A> Basic<L, A>
 where
-    L: Feedback<Input = f64, Output = f64> + Unpin + Clone,
-    A: Feedback<Input = Angle, Output = f64> + Unpin + Clone,
+    L: Feedback<State = f64, Signal = f64> + Unpin + Clone,
+    A: Feedback<State = Angle, Signal = f64> + Unpin + Clone,
 {
     /// Moves the robot forwards by a given distance (measured in wheel units) while
     /// turning to face a heading.
@@ -54,8 +54,8 @@ where
         drivetrain: &'a mut Drivetrain<M, T>,
         target_distance: f64,
         target_heading: Angle,
-    ) -> DriveDistanceAtHeadingFuture<'a, M, L, A, T> {
-        DriveDistanceAtHeadingFuture {
+    ) -> DriveFuture<'a, M, L, A, T> {
+        DriveFuture {
             target_distance,
             target_heading,
             timeout: self.timeout,
@@ -79,7 +79,7 @@ where
         &mut self,
         drivetrain: &'a mut Drivetrain<M, T>,
         distance: f64,
-    ) -> DriveDistanceAtHeadingFuture<'a, M, L, A, T> {
+    ) -> DriveFuture<'a, M, L, A, T> {
         self.drive_distance_at_heading(drivetrain, distance, drivetrain.tracking.heading())
     }
 
@@ -92,7 +92,7 @@ where
         &mut self,
         drivetrain: &'a mut Drivetrain<M, T>,
         heading: Angle,
-    ) -> DriveDistanceAtHeadingFuture<'a, M, L, A, T> {
+    ) -> DriveFuture<'a, M, L, A, T> {
         self.drive_distance_at_heading(drivetrain, 0.0, heading)
     }
 

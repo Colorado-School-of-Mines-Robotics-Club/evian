@@ -3,14 +3,15 @@
 use evian_math::{Angle, IntoAngle, Vec2};
 
 use std::{
-    rc::Rc,
     cell::RefCell,
     f64::consts::{PI, TAU},
+    rc::Rc,
     time::Instant,
 };
 use vexide::{
-    devices::smart::Motor,
-    prelude::{Task, sleep, spawn},
+    smart::motor::Motor,
+    task::{Task, spawn},
+    time::sleep,
 };
 
 use crate::{
@@ -72,9 +73,7 @@ impl<T: RotarySensor> TrackingWheel<T> {
     pub fn travel(&self) -> Result<f64, T::Error> {
         let wheel_circumference = self.wheel_diameter * PI;
 
-        Ok(self.sensor.position()?.as_revolutions()
-            * self.gearing.unwrap_or(1.0)
-            * wheel_circumference)
+        Ok(self.sensor.position()?.as_turns() * self.gearing.unwrap_or(1.0) * wheel_circumference)
     }
 }
 
@@ -293,7 +292,7 @@ impl WheeledTracking {
             // clockwise. We don't want this, since it doesn't match up with how the unit circle works
             // with cartesian coordinates (what we localize in), so we need to convert to a CCW+ angle
             // system.
-            TAU - gyro_heading.as_radians()
+            gyro_heading.as_radians()
         } else if let Some((left_wheel, right_wheel)) = parallel_wheels {
             // Distance between the left and right wheels.
             let track_width = left_wheel.offset.abs() + right_wheel.offset;
@@ -400,13 +399,15 @@ impl WheeledTracking {
             };
 
             // Change in raw heading from the previous loop iteration.
-            let delta_heading = (data.raw_heading - prev_raw_heading).wrapped();
+            let delta_heading = (data.raw_heading - prev_raw_heading).wrapped_half();
 
             // Average between the current and previous heading reading used conversion between
             // global and local coordinate displacements.
             //
             // No need to wrap since we only plug this into trig functions.
-            let avg_heading = ((data.raw_heading + prev_raw_heading) / 2.0) + data.heading_offset;
+            let avg_heading = data.raw_heading + data.heading_offset;
+
+            // println!("{}", avg_heading.as_degrees());
             prev_raw_heading = data.raw_heading;
 
             let mut local_displacement: Vec2<f64> = Vec2::default();
@@ -420,17 +421,17 @@ impl WheeledTracking {
                 let mut count = 0;
 
                 for (data, prev_data) in sideways_wheel_data.iter().zip(&prev_sideways_wheel_data) {
-                    if let Ok((travel, _)) = data {
-                        if let Ok((prev_travel, offset)) = prev_data {
-                            let delta_travel = travel - prev_travel;
-                            count += 1;
+                    if let Ok((travel, _)) = data
+                        && let Ok((prev_travel, offset)) = prev_data
+                    {
+                        let delta_travel = travel - prev_travel;
+                        count += 1;
 
-                            local_y_sum += if delta_heading == Angle::ZERO {
-                                delta_travel
-                            } else {
-                                unit_chord * (delta_travel / delta_heading.as_radians() + offset)
-                            };
-                        }
+                        local_y_sum += if delta_heading == Angle::ZERO {
+                            delta_travel
+                        } else {
+                            unit_chord * (delta_travel / delta_heading.as_radians() + offset)
+                        };
                     }
                 }
 
@@ -511,10 +512,8 @@ impl WheeledTracking {
 
             data.angular_velocity = gyro
                 .as_ref()
-                .and_then(|gyro| gyro.heading().ok())
-                .map_or(delta_heading.as_radians() / dt.as_secs_f64(), |gyro_rate| {
-                    gyro_rate.as_radians()
-                });
+                .and_then(|gyro| gyro.angular_velocity().ok())
+                .unwrap_or_else(|| delta_heading.as_radians() / dt.as_secs_f64());
 
             // Update global position by converting our local displacement vector into a global offset (by
             // rotating our local offset by our heading). Each iteration, we apply this estimate of our change
@@ -534,8 +533,8 @@ impl WheeledTracking {
     }
 
     /// Sets the currently tracked position to a new point.
-    pub fn set_position(&mut self, position: Vec2<f64>) {
-        self.data.borrow_mut().position = position;
+    pub fn set_position(&mut self, position: impl Into<Vec2<f64>>) {
+        self.data.borrow_mut().position = position.into();
     }
 }
 
@@ -554,7 +553,7 @@ impl TracksHeading for WheeledTracking {
         let data = self.data.borrow();
 
         // Apply heading offset and wrap from [0, 2π]
-        (data.raw_heading + data.heading_offset).wrapped_positive()
+        (data.raw_heading + data.heading_offset).wrapped_full()
     }
 }
 

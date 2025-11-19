@@ -25,8 +25,8 @@ pub use move_to_point::MoveToPointFuture;
 #[derive(PartialEq)]
 pub struct Seeking<L, A>
 where
-    L: Feedback<Input = f64, Output = f64> + Unpin + Clone,
-    A: Feedback<Input = f64, Output = f64> + Unpin + Clone,
+    L: Feedback<State = f64, Signal = f64> + Unpin + Clone,
+    A: Feedback<State = f64, Signal = f64> + Unpin + Clone,
 {
     /// Linear (forward) feedback controller.
     pub linear_controller: L,
@@ -46,8 +46,8 @@ where
 
 impl<L, A> Seeking<L, A>
 where
-    L: Feedback<Input = f64, Output = f64> + Unpin + Clone,
-    A: Feedback<Input = f64, Output = f64> + Unpin + Clone,
+    L: Feedback<State = f64, Signal = f64> + Unpin + Clone,
+    A: Feedback<State = f64, Signal = f64> + Unpin + Clone,
 {
     /// Moves the robot to a 2D point.
     ///

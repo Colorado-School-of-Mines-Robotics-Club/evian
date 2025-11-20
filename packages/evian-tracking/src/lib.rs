@@ -130,8 +130,7 @@ pub trait TracksForwardTravel: Tracking {
 macro_rules! shared_motors {
     ( $( $item:expr ),* $(,)?) => {
         {
-            use ::core::cell::RefCell;
-            use ::alloc::{rc::Rc, vec::Vec};
+            use ::std::{cell::RefCell, rc::Rc};
 
             Rc::new(RefCell::new([$($item,)*]))
         }

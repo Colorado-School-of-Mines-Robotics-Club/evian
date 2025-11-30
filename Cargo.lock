@@ -172,7 +172,6 @@ name = "examples"
 version = "0.0.1"
 dependencies = [
  "evian",
- "num-traits",
  "vexide",
 ]
 

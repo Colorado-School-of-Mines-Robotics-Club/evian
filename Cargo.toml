@@ -10,11 +10,7 @@ icon = "cool-x"
 compress = true
 
 [dev-dependencies]
-vexide = { path = "../vexide/packages/vexide", features = [
-    "full",
-    "vex-sdk-jumptable",
-    "vex-sdk-mock",
-] }
+vexide = { version = "0.8.0", features = ["full", "default-sdk"] }
 evian = { path = "packages/evian" }
 
 [workspace]
@@ -22,8 +18,8 @@ members = ["packages/*"]
 resolver = "2"
 
 [workspace.dependencies]
-vexide = { git = "https://github.com/vexide/vexide.git" }
-vexide-devices = { git = "https://github.com/vexide/vexide.git", package = "vexide-devices" }
+vexide = "0.8.0"
+vexide-devices = "0.8.0"
 evian = { version = "0.3.0-rc.1", path = "packages/evian", default-features = false }
 evian-control = { version = "0.0.1-rc.1", path = "packages/evian-control", default-features = false }
 evian-drivetrain = { version = "0.0.1-rc.1", path = "packages/evian-drivetrain", default-features = false }

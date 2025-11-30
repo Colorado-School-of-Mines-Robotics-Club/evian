@@ -1,5 +1,4 @@
 [target.'cfg(target_os = "vexos")']
-runner = "cargo v5 run --file"
 rustflags = ["-Clink-arg=-Tvexide.ld"]
 
 [unstable]

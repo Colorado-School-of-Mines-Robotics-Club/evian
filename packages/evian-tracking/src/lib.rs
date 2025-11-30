@@ -41,10 +41,6 @@
 //! of what units to use and keeps everything generally stable while the Rust ecosystem tries to
 //! figure out what typed units library to go with.
 
-#![no_std]
-
-extern crate alloc;
-
 mod sensor;
 pub mod wheeled;
 
@@ -134,8 +130,7 @@ pub trait TracksForwardTravel: Tracking {
 macro_rules! shared_motors {
     ( $( $item:expr ),* $(,)?) => {
         {
-            use ::core::cell::RefCell;
-            use ::alloc::{rc::Rc, vec::Vec};
+            use ::std::{cell::RefCell, rc::Rc};
 
             Rc::new(RefCell::new([$($item,)*]))
         }

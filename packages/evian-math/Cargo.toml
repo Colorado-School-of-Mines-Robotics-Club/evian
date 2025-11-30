@@ -10,10 +10,19 @@ version = "0.0.1-rc.1"
 edition = "2024"
 
 [dependencies]
+vexide-devices = { workspace = true }
+num-traits = "0.2"
+
+[dev-dependencies]
 vexide = { workspace = true }
+evian = { workspace = true }
 
 [lints]
 workspace = true
 
 [package.metadata.docs.rs]
-targets = ["armv7a-none-eabi"]
+targets = ["armv7a-vex-v5"]
+cargo-args = [
+    "-Zbuild-std=std,panic_abort",
+    "-Zbuild-std-features=compiler-builtins-mem",
+]

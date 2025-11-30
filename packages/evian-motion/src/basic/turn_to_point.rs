@@ -1,15 +1,15 @@
-use core::{
+use std::{
     future::Future,
     pin::Pin,
     task::{Context, Poll},
-    time::Duration,
+    time::{Duration, Instant},
 };
 
-use vexide::time::{Instant, Sleep, sleep};
+use vexide::time::{Sleep, sleep};
 
 use evian_control::{
     Tolerances,
-    loops::{AngularPid, ControlLoop, Feedback, Pid},
+    loops::{AngularPid, Feedback, Pid},
 };
 use evian_drivetrain::{Drivetrain, model::Arcade};
 use evian_math::{Angle, IntoAngle, Vec2};
@@ -29,8 +29,8 @@ pub(crate) struct State {
 pub struct TurnToPointFuture<'a, M, L, A, T>
 where
     M: Arcade,
-    L: ControlLoop<Input = f64, Output = f64> + Unpin,
-    A: ControlLoop<Input = Angle, Output = f64> + Unpin,
+    L: Feedback<State = f64, Signal = f64> + Unpin,
+    A: Feedback<State = Angle, Signal = f64> + Unpin,
     T: TracksPosition + TracksHeading + TracksVelocity,
 {
     pub(crate) point: Vec2<f64>,
@@ -50,8 +50,8 @@ where
 impl<M, L, A, T> Future for TurnToPointFuture<'_, M, L, A, T>
 where
     M: Arcade,
-    L: Feedback<Input = f64, Output = f64> + Unpin,
-    A: Feedback<Input = Angle, Output = f64> + Unpin,
+    L: Feedback<State = f64, Signal = f64> + Unpin,
+    A: Feedback<State = Angle, Signal = f64> + Unpin,
     T: TracksForwardTravel + TracksHeading + TracksVelocity + TracksPosition,
 {
     type Output = ();
@@ -82,7 +82,7 @@ where
         let target_heading = (this.point - position).angle().rad();
 
         let linear_error = state.initial_forward_travel - forward_travel;
-        let angular_error = (heading - target_heading).wrapped();
+        let angular_error = (heading - target_heading).wrapped_half();
 
         if this
             .linear_tolerances
@@ -132,8 +132,8 @@ where
 impl<M, L, A, T> TurnToPointFuture<'_, M, L, A, T>
 where
     M: Arcade,
-    L: ControlLoop<Input = f64, Output = f64> + Unpin,
-    A: ControlLoop<Input = Angle, Output = f64> + Unpin,
+    L: Feedback<State = f64, Signal = f64> + Unpin,
+    A: Feedback<State = Angle, Signal = f64> + Unpin,
     T: TracksPosition + TracksForwardTravel + TracksHeading + TracksVelocity,
 {
     /// Modifies this motion's linear feedback controller.
@@ -257,7 +257,7 @@ where
 impl<M, A, T> TurnToPointFuture<'_, M, Pid, A, T>
 where
     M: Arcade,
-    A: ControlLoop<Input = Angle, Output = f64> + Unpin,
+    A: Feedback<State = Angle, Signal = f64> + Unpin,
     T: TracksPosition + TracksForwardTravel + TracksHeading + TracksVelocity,
 {
     /// Modifies this motion's linear PID gains.
@@ -315,7 +315,7 @@ where
 impl<M, L, T> TurnToPointFuture<'_, M, L, AngularPid, T>
 where
     M: Arcade,
-    L: ControlLoop<Input = f64, Output = f64> + Unpin,
+    L: Feedback<State = f64, Signal = f64> + Unpin,
     T: TracksPosition + TracksForwardTravel + TracksHeading + TracksVelocity,
 {
     /// Modifies this motion's angular PID gains.

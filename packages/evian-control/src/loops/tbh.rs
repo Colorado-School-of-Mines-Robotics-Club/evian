@@ -1,8 +1,6 @@
-use core::time::Duration;
+use std::time::Duration;
 
-use crate::loops::{ControlLoop, Feedback};
-
-use super::FeedbackMarker;
+use crate::loops::Feedback;
 
 /// Take-back-half flywheel velocity controller.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -35,13 +33,10 @@ impl TakeBackHalf {
     }
 }
 
-impl ControlLoop for TakeBackHalf {
-    type Marker = FeedbackMarker;
-    type Input = f64;
-    type Output = f64;
-}
-
 impl Feedback for TakeBackHalf {
+    type State = f64;
+    type Signal = f64;
+    
     fn update(&mut self, measurement: f64, setpoint: f64, _dt: Duration) -> f64 {
         let error = setpoint - measurement;
 

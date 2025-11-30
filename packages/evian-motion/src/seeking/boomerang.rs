@@ -1,6 +1,6 @@
-use core::{future::Future, pin::Pin, task::Poll, time::Duration};
+use std::{future::Future, pin::Pin, task::Poll, time::{Duration, Instant}};
 
-use vexide::time::{Instant, Sleep, sleep};
+use vexide::time::{Sleep, sleep};
 
 use evian_control::{
     Tolerances,
@@ -22,8 +22,8 @@ pub struct State {
 pub struct BoomerangFuture<'a, M, L, A, T>
 where
     M: Arcade,
-    L: Feedback<Input = f64, Output = f64> + Unpin,
-    A: Feedback<Input = Angle, Output = f64> + Unpin,
+    L: Feedback<State = f64, Signal = f64> + Unpin,
+    A: Feedback<State = Angle, Signal = f64> + Unpin,
     T: TracksPosition + TracksHeading + TracksVelocity,
 {
     pub(crate) target_point: Vec2<f64>,
@@ -43,8 +43,8 @@ where
 impl<M, L, A, T> Future for BoomerangFuture<'_, M, L, A, T>
 where
     M: Arcade,
-    L: Feedback<Input = f64, Output = f64> + Unpin,
-    A: Feedback<Input = Angle, Output = f64> + Unpin,
+    L: Feedback<State = f64, Signal = f64> + Unpin,
+    A: Feedback<State = Angle, Signal = f64> + Unpin,
     T: TracksPosition + TracksHeading + TracksVelocity,
 {
     type Output = ();
@@ -81,7 +81,7 @@ where
 
         let local_target = carrot - position;
 
-        let angular_error = (heading - local_target.angle().rad()).wrapped();
+        let angular_error = (heading - local_target.angle().rad()).wrapped_half();
         let linear_error = local_target.length();
 
         let close = linear_error < 7.5;
@@ -125,8 +125,8 @@ where
 impl<M, L, A, T> BoomerangFuture<'_, M, L, A, T>
 where
     M: Arcade,
-    L: Feedback<Input = f64, Output = f64> + Unpin,
-    A: Feedback<Input = Angle, Output = f64> + Unpin,
+    L: Feedback<State = f64, Signal = f64> + Unpin,
+    A: Feedback<State = Angle, Signal = f64> + Unpin,
     T: TracksPosition + TracksHeading + TracksVelocity,
 {
     /// Modifies this motion's linear feedback controller.
@@ -166,7 +166,7 @@ where
     }
 
     /// Removes this motion's error tolerance.
-    pub const fn withear_error_tolerance(&mut self) -> &mut Self {
+    pub const fn without_error_tolerance(&mut self) -> &mut Self {
         self.tolerances.error_tolerance = None;
         self
     }
@@ -178,7 +178,7 @@ where
     }
 
     /// Removes this motion's velocity tolerance.
-    pub const fn withear_velocity_tolerance(&mut self) -> &mut Self {
+    pub const fn without_velocity_tolerance(&mut self) -> &mut Self {
         self.tolerances.velocity_tolerance = None;
         self
     }
@@ -190,7 +190,7 @@ where
     }
 
     /// Removes this motion's tolerance duration.
-    pub const fn withear_tolerance_duration(&mut self) -> &mut Self {
+    pub const fn without_tolerance_duration(&mut self) -> &mut Self {
         self.tolerances.duration = None;
         self
     }
@@ -201,7 +201,7 @@ where
 impl<M, A, T> BoomerangFuture<'_, M, Pid, A, T>
 where
     M: Arcade,
-    A: Feedback<Input = Angle, Output = f64> + Unpin,
+    A: Feedback<State = Angle, Signal = f64> + Unpin,
     T: TracksPosition + TracksHeading + TracksVelocity,
 {
     /// Modifies this motion's linear PID gains.
@@ -259,7 +259,7 @@ where
 impl<M, L, T> BoomerangFuture<'_, M, L, AngularPid, T>
 where
     M: Arcade,
-    L: Feedback<Input = f64, Output = f64> + Unpin,
+    L: Feedback<State = f64, Signal = f64> + Unpin,
     T: TracksPosition + TracksHeading + TracksVelocity,
 {
     /// Modifies this motion's angular PID gains.

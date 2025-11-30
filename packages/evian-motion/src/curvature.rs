@@ -1,6 +1,5 @@
-use core::f64::consts::FRAC_PI_2;
+use std::f64::consts::FRAC_PI_2;
 use evian_tracking::Tracking;
-use vexide::float::Float;
 
 use evian_drivetrain::{Drivetrain, model::Arcade};
 

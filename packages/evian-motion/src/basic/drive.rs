@@ -1,11 +1,11 @@
-use core::{
+use std::{
     future::Future,
     pin::Pin,
     task::{Context, Poll},
-    time::Duration,
+    time::{Duration, Instant},
 };
 
-use vexide::time::{Instant, Sleep, sleep};
+use vexide::time::{Sleep, sleep};
 
 use evian_control::{
     Tolerances,
@@ -15,22 +15,22 @@ use evian_drivetrain::{Drivetrain, model::Arcade};
 use evian_math::Angle;
 use evian_tracking::{TracksForwardTravel, TracksHeading, TracksVelocity};
 
-pub(crate) struct State {
-    sleep: Sleep,
-    initial_forward_travel: f64,
-    start_time: Instant,
-    prev_time: Instant,
-    linear_settled: bool,
-    angular_settled: bool,
+pub(crate) struct DriveState {
+    pub sleep: Sleep,
+    pub initial_forward_travel: f64,
+    pub start_time: Instant,
+    pub prev_time: Instant,
+    pub linear_settled: bool,
+    pub angular_settled: bool,
 }
 
 /// Drives the robot forward or backwards for a distance at a given heading.
 #[must_use = "futures do nothing unless you `.await` or poll them"]
-pub struct DriveDistanceAtHeadingFuture<'a, M, L, A, T>
+pub struct DriveFuture<'a, M, L, A, T>
 where
     M: Arcade,
-    L: Feedback<Input = f64, Output = f64> + Unpin,
-    A: Feedback<Input = Angle, Output = f64> + Unpin,
+    L: Feedback<State = f64, Signal = f64> + Unpin,
+    A: Feedback<State = Angle, Signal = f64> + Unpin,
     T: TracksForwardTravel + TracksHeading + TracksVelocity,
 {
     pub(crate) target_distance: f64,
@@ -43,16 +43,16 @@ where
     pub(crate) drivetrain: &'a mut Drivetrain<M, T>,
 
     /// Internal future state ("local variables").
-    pub(crate) state: Option<State>,
+    pub(crate) state: Option<DriveState>,
 }
 
 // MARK: Future Poll
 
-impl<M, L, A, T> Future for DriveDistanceAtHeadingFuture<'_, M, L, A, T>
+impl<M, L, A, T> Future for DriveFuture<'_, M, L, A, T>
 where
     M: Arcade,
-    L: Feedback<Input = f64, Output = f64> + Unpin,
-    A: Feedback<Input = Angle, Output = f64> + Unpin,
+    L: Feedback<State = f64, Signal = f64> + Unpin,
+    A: Feedback<State = Angle, Signal = f64> + Unpin,
     T: TracksForwardTravel + TracksHeading + TracksVelocity,
 {
     type Output = ();
@@ -61,7 +61,7 @@ where
         let this = self.get_mut();
         let state = this.state.get_or_insert_with(|| {
             let now = Instant::now();
-            State {
+            DriveState {
                 sleep: sleep(Duration::from_millis(5)),
                 initial_forward_travel: this.drivetrain.tracking.forward_travel(),
                 start_time: now,
@@ -74,14 +74,16 @@ where
         if Pin::new(&mut state.sleep).poll(cx).is_pending() {
             return Poll::Pending;
         }
-
+        
         let dt = state.prev_time.elapsed();
-
+        
         let forward_travel = this.drivetrain.tracking.forward_travel();
         let heading = this.drivetrain.tracking.heading();
 
         let linear_error = (this.target_distance + state.initial_forward_travel) - forward_travel;
-        let angular_error = (this.target_heading - heading).wrapped();
+        let angular_error = (this.target_heading - heading).wrapped_half();
+        
+        // println!("{}", linear_error);
 
         if this
             .linear_tolerances
@@ -114,10 +116,11 @@ where
             .angular_controller
             .update(heading, this.target_heading, dt);
 
-        drop(this
-            .drivetrain
-            .model
-            .drive_arcade(linear_output, angular_output));
+        drop(
+            this.drivetrain
+                .model
+                .drive_arcade(linear_output, angular_output),
+        );
 
         state.sleep = sleep(Duration::from_millis(5));
         state.prev_time = Instant::now();
@@ -129,11 +132,11 @@ where
 
 // MARK: Generic Modifiers
 
-impl<M, L, A, T> DriveDistanceAtHeadingFuture<'_, M, L, A, T>
+impl<M, L, A, T> DriveFuture<'_, M, L, A, T>
 where
     M: Arcade,
-    L: Feedback<Input = f64, Output = f64> + Unpin,
-    A: Feedback<Input = Angle, Output = f64> + Unpin,
+    L: Feedback<State = f64, Signal = f64> + Unpin,
+    A: Feedback<State = Angle, Signal = f64> + Unpin,
     T: TracksForwardTravel + TracksHeading + TracksVelocity,
 {
     /// Modifies this motion's linear feedback controller.
@@ -254,10 +257,10 @@ where
 
 // MARK: Linear PID Modifiers
 
-impl<M, A, T> DriveDistanceAtHeadingFuture<'_, M, Pid, A, T>
+impl<M, A, T> DriveFuture<'_, M, Pid, A, T>
 where
     M: Arcade,
-    A: Feedback<Input = Angle, Output = f64> + Unpin,
+    A: Feedback<State = Angle, Signal = f64> + Unpin,
     T: TracksForwardTravel + TracksHeading + TracksVelocity,
 {
     /// Modifies this motion's linear PID gains.
@@ -312,10 +315,10 @@ where
 
 // MARK: Angular PID Modifiers
 
-impl<M, L, T> DriveDistanceAtHeadingFuture<'_, M, L, AngularPid, T>
+impl<M, L, T> DriveFuture<'_, M, L, AngularPid, T>
 where
     M: Arcade,
-    L: Feedback<Input = f64, Output = f64> + Unpin,
+    L: Feedback<State = f64, Signal = f64> + Unpin,
     T: TracksForwardTravel + TracksHeading + TracksVelocity,
 {
     /// Modifies this motion's angular PID gains.

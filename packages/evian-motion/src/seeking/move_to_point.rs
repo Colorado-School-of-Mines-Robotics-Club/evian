@@ -1,18 +1,23 @@
-use core::{f64::consts::PI, future::Future, pin::Pin, task::Poll, time::Duration};
+use std::{
+    f64::consts::FRAC_PI_2,
+    future::Future,
+    pin::Pin,
+    task::Poll,
+    time::{Duration, Instant},
+};
 
-use vexide::time::{Instant, Sleep, sleep};
+use vexide::time::{Sleep, sleep};
 
 use evian_control::{
     Tolerances,
-    loops::{AngularPid, Feedback, Pid},
+    loops::{Feedback, Pid},
 };
 use evian_drivetrain::{Drivetrain, model::Arcade};
-use evian_math::{Angle, IntoAngle, Vec2};
+use evian_math::{IntoAngle, Vec2};
 use evian_tracking::{TracksHeading, TracksPosition, TracksVelocity};
 
 pub(crate) struct State {
     sleep: Sleep,
-    close: bool,
     prev_time: Instant,
     start_time: Instant,
 }
@@ -22,8 +27,8 @@ pub(crate) struct State {
 pub struct MoveToPointFuture<'a, M, L, A, T>
 where
     M: Arcade,
-    L: Feedback<Input = f64, Output = f64> + Unpin,
-    A: Feedback<Input = Angle, Output = f64> + Unpin,
+    L: Feedback<State = f64, Signal = f64> + Unpin,
+    A: Feedback<State = f64, Signal = f64> + Unpin,
     T: TracksPosition + TracksHeading + TracksVelocity,
 {
     pub(crate) target_point: Vec2<f64>,
@@ -31,7 +36,7 @@ where
     pub(crate) timeout: Option<Duration>,
     pub(crate) tolerances: Tolerances,
     pub(crate) linear_controller: L,
-    pub(crate) angular_controller: A,
+    pub(crate) lateral_controller: A,
     pub(crate) drivetrain: &'a mut Drivetrain<M, T>,
     pub(crate) state: Option<State>,
 }
@@ -41,8 +46,8 @@ where
 impl<M, L, A, T> Future for MoveToPointFuture<'_, M, L, A, T>
 where
     M: Arcade,
-    L: Feedback<Input = f64, Output = f64> + Unpin,
-    A: Feedback<Input = Angle, Output = f64> + Unpin,
+    L: Feedback<State = f64, Signal = f64> + Unpin,
+    A: Feedback<State = f64, Signal = f64> + Unpin,
     T: TracksPosition + TracksHeading + TracksVelocity,
 {
     type Output = ();
@@ -59,7 +64,6 @@ where
                 sleep: sleep(Duration::from_millis(5)),
                 start_time: now,
                 prev_time: now,
-                close: false,
             }
         });
 
@@ -73,19 +77,7 @@ where
         let heading = this.drivetrain.tracking.heading();
 
         let local_target = this.target_point - position;
-
         let mut distance_error = local_target.length();
-
-        if distance_error.abs() < 7.5 && !state.close {
-            state.close = true;
-        }
-
-        let mut angle_error = (heading - local_target.angle().rad()).wrapped();
-
-        if this.reverse {
-            distance_error *= -1.0;
-            angle_error = (PI.rad() - angle_error).wrapped();
-        }
 
         if this
             .tolerances
@@ -94,23 +86,26 @@ where
                 .timeout
                 .is_some_and(|timeout| state.start_time.elapsed() > timeout)
         {
-            _ = this.drivetrain.model.drive_arcade(0.0, 0.0);
+            drop(this.drivetrain.model.drive_arcade(0.0, 0.0));
             return Poll::Ready(());
         }
 
-        let angular_output = if state.close {
-            0.0
-        } else {
-            this.angular_controller
-                .update(-angle_error, Angle::ZERO, dt)
-        };
-        let linear_output =
-            this.linear_controller.update(-distance_error, 0.0, dt) * angle_error.cos();
+        let angle_error = (heading - local_target.angle().rad()).wrapped_half();
+        let mut projected_cte = distance_error * angle_error.sin();
 
-        _ = this
-            .drivetrain
-            .model
-            .drive_arcade(linear_output, angular_output);
+        if angle_error.as_radians().abs() > FRAC_PI_2 {
+            projected_cte *= -1.0;
+            distance_error *= -1.0;
+        }
+
+        let angular_output = this.lateral_controller.update(projected_cte, 0.0, dt);
+        let linear_output = this.linear_controller.update(-distance_error, 0.0, dt) * angle_error.cos().abs();
+
+        drop(
+            this.drivetrain
+                .model
+                .drive_arcade(linear_output, angular_output),
+        );
 
         state.sleep = sleep(Duration::from_millis(5));
         state.prev_time = Instant::now();
@@ -125,8 +120,8 @@ where
 impl<M, L, A, T> MoveToPointFuture<'_, M, L, A, T>
 where
     M: Arcade,
-    L: Feedback<Input = f64, Output = f64> + Unpin,
-    A: Feedback<Input = Angle, Output = f64> + Unpin,
+    L: Feedback<State = f64, Signal = f64> + Unpin,
+    A: Feedback<State = f64, Signal = f64> + Unpin,
     T: TracksPosition + TracksHeading + TracksVelocity,
 {
     /// Reverses this motion, moving to the point backwards rather than forwards.
@@ -141,9 +136,9 @@ where
         self
     }
 
-    /// Modifies this motion's angular feedback controller.
-    pub fn with_angular_controller(&mut self, controller: A) -> &mut Self {
-        self.angular_controller = controller;
+    /// Modifies this motion's lateral feedback controller.
+    pub fn with_lateral_controller(&mut self, controller: A) -> &mut Self {
+        self.lateral_controller = controller;
         self
     }
 
@@ -172,7 +167,7 @@ where
     }
 
     /// Removes this motion's error tolerance.
-    pub const fn withear_error_tolerance(&mut self) -> &mut Self {
+    pub const fn without_error_tolerance(&mut self) -> &mut Self {
         self.tolerances.error_tolerance = None;
         self
     }
@@ -184,7 +179,7 @@ where
     }
 
     /// Removes this motion's velocity tolerance.
-    pub const fn withear_velocity_tolerance(&mut self) -> &mut Self {
+    pub const fn without_velocity_tolerance(&mut self) -> &mut Self {
         self.tolerances.velocity_tolerance = None;
         self
     }
@@ -207,7 +202,7 @@ where
 impl<M, A, T> MoveToPointFuture<'_, M, Pid, A, T>
 where
     M: Arcade,
-    A: Feedback<Input = Angle, Output = f64> + Unpin,
+    A: Feedback<State = f64, Signal = f64> + Unpin,
     T: TracksPosition + TracksHeading + TracksVelocity,
 {
     /// Modifies this motion's linear PID gains.
@@ -262,58 +257,58 @@ where
 
 // MARK: Angular PID Modifiers
 
-impl<M, L, T> MoveToPointFuture<'_, M, L, AngularPid, T>
+impl<M, L, T> MoveToPointFuture<'_, M, L, Pid, T>
 where
     M: Arcade,
-    L: Feedback<Input = f64, Output = f64> + Unpin,
+    L: Feedback<State = f64, Signal = f64> + Unpin,
     T: TracksPosition + TracksHeading + TracksVelocity,
 {
-    /// Modifies this motion's angular PID gains.
-    pub const fn with_angular_gains(&mut self, kp: f64, ki: f64, kd: f64) -> &mut Self {
-        self.angular_controller.set_gains(kp, ki, kd);
+    /// Modifies this motion's lateral PID gains.
+    pub const fn with_lateral_gains(&mut self, kp: f64, ki: f64, kd: f64) -> &mut Self {
+        self.lateral_controller.set_gains(kp, ki, kd);
         self
     }
 
-    /// Modifies this motion's angular proportional gain (`kp`).
-    pub const fn with_angular_kp(&mut self, kp: f64) -> &mut Self {
-        self.angular_controller.set_kp(kp);
+    /// Modifies this motion's lateral proportional gain (`kp`).
+    pub const fn with_lateral_kp(&mut self, kp: f64) -> &mut Self {
+        self.lateral_controller.set_kp(kp);
         self
     }
 
-    /// Modifies this motion's angular integral gain (`ki`).
-    pub const fn with_angular_ki(&mut self, ki: f64) -> &mut Self {
-        self.angular_controller.set_ki(ki);
+    /// Modifies this motion's lateral integral gain (`ki`).
+    pub const fn with_lateral_ki(&mut self, ki: f64) -> &mut Self {
+        self.lateral_controller.set_ki(ki);
         self
     }
 
-    /// Modifies this motion's angular derivative gain (`kd`).
-    pub const fn with_angular_kd(&mut self, kd: f64) -> &mut Self {
-        self.angular_controller.set_kd(kd);
+    /// Modifies this motion's lateral derivative gain (`kd`).
+    pub const fn with_lateral_kd(&mut self, kd: f64) -> &mut Self {
+        self.lateral_controller.set_kd(kd);
         self
     }
 
-    /// Modifies this motion's angular integration range.
-    pub const fn with_angular_integration_range(&mut self, integration_range: Angle) -> &mut Self {
-        self.angular_controller
+    /// Modifies this motion's lateral integration range.
+    pub const fn with_lateral_integration_range(&mut self, integration_range: f64) -> &mut Self {
+        self.lateral_controller
             .set_integration_range(Some(integration_range));
         self
     }
 
-    /// Modifies this motion's angular output limit.
-    pub const fn with_angular_output_limit(&mut self, limit: f64) -> &mut Self {
-        self.angular_controller.set_output_limit(Some(limit));
+    /// Modifies this motion's lateral output limit.
+    pub const fn with_lateral_output_limit(&mut self, limit: f64) -> &mut Self {
+        self.lateral_controller.set_output_limit(Some(limit));
         self
     }
 
-    /// Removes this motion's angular integration range.
-    pub const fn without_angular_integration_range(&mut self) -> &mut Self {
-        self.angular_controller.set_integration_range(None);
+    /// Removes this motion's lateral integration range.
+    pub const fn without_lateral_integration_range(&mut self) -> &mut Self {
+        self.lateral_controller.set_integration_range(None);
         self
     }
 
-    /// Removes this motion's angular output limit.
-    pub const fn without_angular_output_limit(&mut self) -> &mut Self {
-        self.angular_controller.set_output_limit(None);
+    /// Removes this motion's lateral output limit.
+    pub const fn without_lateral_output_limit(&mut self) -> &mut Self {
+        self.lateral_controller.set_output_limit(None);
         self
     }
 }

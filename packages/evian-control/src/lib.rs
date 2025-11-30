@@ -4,8 +4,6 @@
 //! systems. These "systems" could be drivetrains, an arm or lift, or any other
 //! mechanism that requires precise motion control.
 
-#![no_std]
-
 pub mod loops;
 
 mod tolerances;
